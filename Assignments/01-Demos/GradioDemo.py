@@ -4,6 +4,8 @@ Many examples are taken from the Hugging Face documentation and the Gradio Demos
 - https://www.gradio.app/demos/
 """
 
+from argparse import ArgumentParser
+
 from random import randint
 
 import gradio as gr
@@ -174,4 +176,7 @@ demo = gr.TabbedInterface(
 )
 
 if __name__ == "__main__":
-    demo.launch(server_port=8921)
+    argparser = ArgumentParser("CS 152 Demo Assignment")
+    argparser.add_argument("port", type=int, help="Your personal forwarded port.")
+    args = argparser.parse_args()
+    demo.launch(server_port=args.port)
