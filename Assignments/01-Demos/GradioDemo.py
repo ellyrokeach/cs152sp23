@@ -88,7 +88,7 @@ def get_diffuser():
     image_generator = DiffusionPipeline.from_pretrained(
         "runwayml/stable-diffusion-v1-5"
     )
-    image_generator.to("cuda")
+    #    image_generator.to("cuda")
 
     def generator(prompt):
         return image_generator(prompt).images[0]
