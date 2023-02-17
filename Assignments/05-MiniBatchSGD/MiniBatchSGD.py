@@ -13,24 +13,21 @@
 #     name: python3
 # ---
 
-# %% [markdown] toc=true
-# <h1>Table of Contents<span class="tocSkip"></span></h1>
-# <div class="toc"><ul class="toc-item"><li><span><a href="#Instructions:" data-toc-modified-id="Instructions:-1"><span class="toc-item-num">1&nbsp;&nbsp;</span>Instructions:</a></span></li><li><span><a href="#Questions-to-Answer" data-toc-modified-id="Questions-to-Answer-2"><span class="toc-item-num">2&nbsp;&nbsp;</span>Questions to Answer</a></span></li><li><span><a href="#Things-to-Try" data-toc-modified-id="Things-to-Try-3"><span class="toc-item-num">3&nbsp;&nbsp;</span>Things to Try</a></span></li><li><span><a href="#Set-Hyperparameters" data-toc-modified-id="Set-Hyperparameters-4"><span class="toc-item-num">4&nbsp;&nbsp;</span>Set Hyperparameters</a></span></li><li><span><a href="#Prepare-the-MNIST-Dataset" data-toc-modified-id="Prepare-the-MNIST-Dataset-5"><span class="toc-item-num">5&nbsp;&nbsp;</span>Prepare the MNIST Dataset</a></span></li><li><span><a href="#Create-a-Neural-Network" data-toc-modified-id="Create-a-Neural-Network-6"><span class="toc-item-num">6&nbsp;&nbsp;</span>Create a Neural Network</a></span></li><li><span><a href="#Train-Classifier" data-toc-modified-id="Train-Classifier-7"><span class="toc-item-num">7&nbsp;&nbsp;</span>Train Classifier</a></span></li></ul></div>
-
 # %% [markdown]
 # # Mini-Batch SGD Assignment
 #
 # ## Instructions:
 #
-# 1. Clone this repository (or just pull changes if you already have it).
-# 2. Start Jupyter (don't forget to activate conda).
-# 3. Duplicate this file so that you can still pull changes without merging.
-# 4. Complete the "Questions to Answer."
-# 5. Complete the "Things to Try."
+# 1. Log onto the serve with port forwarding.
+# 2. Clone this repository (or just pull changes if you already have it).
+# 3. Start Jupyter (don't forget to activate conda).
+# 4. Duplicate this file so that you can still pull changes without merging.
+# 5. Complete the "Questions to Answer."
+# 6. Complete the "Things to Try."
 #
 # ## Questions to Answer
 #
-# You will answer these questions on gradescope. Try to answer these in your group prior to running or altering any code.
+# You will answer these questions on gradescope. Try to answer these with your partner prior to running or altering any code.
 #
 # 1. How could you make this code run "stochastic gradient descent (SGD)"?
 #
@@ -44,9 +41,11 @@
 #
 # 1. What is the shape of `train_Y`?
 #
+# 1. What is the shape of the first linear layer's weight matrix?
+#
 # 1. What is the purpose of the `with torch.no_grad()` ([documentation](https://pytorch.org/docs/stable/generated/torch.no_grad.html#torch.no_grad)) context manager?
 #
-# 1. How do we compute accuracy? Describe the code for doing so.
+# 1. How do we compute accuracy? Describe what the code is doing.
 #
 #     ~~~python
 #     # Convert network output into predictions (one-hot -> number)
@@ -70,6 +69,8 @@
 # 1. Change the hidden layer activation functions to sigmoid. What were the results?
 #
 # 1. Change the hidden layer activation functions to [something else](https://pytorch.org/docs/stable/nn.html#non-linear-activations-weighted-sum-nonlinearity). What were the results?
+#
+# 1. Change the hidden layer activation functions to `nn.Identify`. What were the results?
 #
 # 1. (Optional) Try adding a [dropout layer](https://pytorch.org/docs/stable/generated/torch.nn.Dropout.html#torch.nn.Dropout) after each activation function. What were the results?
 #
@@ -135,8 +136,8 @@ jtplot.style(context="talk")
 
 # %%
 # Let's use some shared space for the data (so that we don't have copies
-# sitting around everywhere)
-data_path = "/raid/cs152/cache/pytorch/data"
+# sitting around in each of your home directories)
+data_path = "/data/cs152/cache/pytorch/data"
 
 # Use the GPUs if they are available
 device = "cuda" if torch.cuda.is_available() else "cpu"
@@ -151,6 +152,7 @@ num_epochs = 10
 learning_rate = 0.01
 
 criterion = nn.CrossEntropyLoss()
+activation_function = nn.ReLU
 
 
 # %% [markdown]
@@ -221,7 +223,7 @@ image_df.style.set_properties(**{'font-size':'6pt'}).background_gradient('Greys'
 
 # %%
 class NeuralNetwork(nn.Module):
-    def __init__(self, layer_sizes):
+    def __init__(self, layer_sizes, act_func):
         super(NeuralNetwork, self).__init__()
 
         # The first "layer" just rearranges the Nx28x28 input into Nx784
@@ -231,11 +233,11 @@ class NeuralNetwork(nn.Module):
         # 1. a linear component (computing Z) and
         # 2. a non-linear comonent (computing A)
         hidden_layers = [
-            nn.Sequential(nn.Linear(nlminus1, nl), nn.ReLU())
+            nn.Sequential(nn.Linear(nlminus1, nl), act_func())
             for nl, nlminus1 in zip(layer_sizes[1:-1], layer_sizes)
         ]
 
-        # The output layer must be Linear without an activation. See:
+        # The output layer must be Linear WITHOUT an activation. See:
         #   https://pytorch.org/docs/stable/generated/torch.nn.CrossEntropyLoss.html
         output_layer = nn.Linear(layer_sizes[-2], layer_sizes[-1])
 
@@ -244,6 +246,8 @@ class NeuralNetwork(nn.Module):
         self.layers = nn.Sequential(*all_layers)
 
     def forward(self, X):
+        # Since we've wrapped all layers in nn.Sequential, we just have to
+        # call one method and not manually pass the input forward
         return self.layers(X)
 
 
@@ -256,7 +260,7 @@ nL = len(train_loader.dataset.classes)
 
 # Preprend the input and append the output layer sizes
 layer_sizes = [n0] + neurons_per_layer + [nL]
-model = NeuralNetwork(layer_sizes).to(device)
+model = NeuralNetwork(layer_sizes, activation_function).to(device)
 
 summary(model);
 
