@@ -8,164 +8,345 @@
 #       format_version: '1.3'
 #       jupytext_version: 1.14.4
 #   kernelspec:
-#     display_name: Python 3 (ipykernel)
+#     display_name: cs152
 #     language: python
 #     name: python3
 # ---
 
 # %%
-from time import perf_counter
-from contextlib import contextmanager
-
-@contextmanager
-def stopwatch(label: str):
-    start = timer()
-    try:
-        yield
-    finally:
-        print(f"{label}: {timer() - start:6.2f}s")
-
-# %%
 import torch
 import torch.nn.functional as F
+
+from torch.utils.data import Dataset, DataLoader, random_split
+from torch.nn import Linear, Module
+
 import matplotlib.pyplot as plt
 import numpy as np
 
+
+# %% [markdown]
+# # Prepare The Dataset
+
 # %%
+def demo_curve(X: torch.Tensor, noise: float) -> torch.Tensor:
+    return torch.sin(X) + torch.randn(X.shape) * noise
+
+
+class SinusoidDataset(Dataset):
+    def __init__(self, num_samples=1000, num_features=1, num_targets=1, noise=0.1):
+        self.num_samples = num_samples
+        self.num_features = num_features
+        self.num_targets = num_targets
+        self.noise = noise
+
+        self.X = torch.rand(num_samples, num_features) * 2 * torch.pi - torch.pi
+        self.y = demo_curve(self.X, noise)
+
+    def __len__(self):
+        return self.num_samples
+
+    def __getitem__(self, idx):
+        return self.X[idx], self.y[idx]
+
+
+# %%
+# Dataset specifications
 N = 100
 nx = 1
 ny = 1
 
-x = torch.unsqueeze(torch.linspace(-3, 3, N), dim=1)
-y = torch.sin(x) + 0.1 * torch.randn(x.size())
-# y = x.pow(2) + 0.2 * torch.rand(x.size())
-x.shape, y.shape
+noise = 0.1
+data_split = [0.8, 0.2]
+
+# Create a fake dataset and split it into training and validation partitions
+full_dataset = SinusoidDataset(N, nx, ny, noise)
+train_dataset, valid_dataset = random_split(full_dataset, data_split)
+
+plt.plot(full_dataset.X, full_dataset.y, "o")
+
+
+# %% [markdown]
+# # Design A Neural Network
 
 # %%
-plt.plot(x, y, 'o');
+class TwoLayerNetwork(Module):
+    def __init__(self, num_features, num_hidden, num_targets, activation):
+        super(TwoLayerNetwork, self).__init__()
+        self.activation = activation
+        self.layer1 = Linear(num_features, num_hidden)
+        self.layer2 = Linear(num_hidden, num_targets)
 
-
-# %%
-class NN(torch.nn.Module):
-    def __init__(self, nx, n1, ny, activation_function):
-        super(NN, self).__init__()
-        self.activation_function = activation_function
-        self.layer1 = torch.nn.Linear(nx, n1)
-        self.layer2 = torch.nn.Linear(n1, ny)
-        
     def forward(self, x):
-        x = self.activation_function(self.layer1(x))
+        x = self.activation(self.layer1(x))
         x = self.layer2(x)
         return x
 
 
-# %%
-n1 = 10
-activation_function = F.relu
+# %% [markdown]
+# # Train With (Batch) Gradient Descent
 
-num_epochs = 100
+# %%
+# Hyperparameters
+n1 = 10
+activation = F.relu
+
+batch_size = len(train_dataset)
+num_epochs = 10
 learning_rate = 0.2
 
-model = NN(nx, n1, ny, activation_function)
+# Create data loaders for the training and validation datasets
+train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
+valid_loader = DataLoader(valid_dataset, batch_size=len(valid_dataset), shuffle=False)
 
+# Create the model, loss function, and optimizer
+model = TwoLayerNetwork(nx, n1, ny, activation)
 optimizer = torch.optim.SGD(model.parameters(), lr=learning_rate)
 criterion = torch.nn.MSELoss()
 
-losses = []
+train_losses = []
+valid_losses = []
+
+# Run batch gradient descent
 for _ in range(num_epochs):
-    yhat = model(x)
-    
+
+    #
+    # Put the model in training mode and update the parameters
+    #
+
+    model.train()
+
+    # Grab the entire dataset as a single batch
+    X, y = next(iter(train_loader))
+
+    yhat = model(y)
+
     loss = criterion(yhat, y)
-    losses.append(loss.detach().item())
-    
+    train_losses.append(loss.detach().item())
+
     optimizer.zero_grad()
     loss.backward()
     optimizer.step()
 
+    #
+    # Put the model in evaluation mode and compute the validation loss
+    #
+
+    model.eval()
+
+    with torch.no_grad():
+        X, y = next(iter(valid_loader))
+        yhat = model(y)
+        loss = criterion(yhat, y)
+        valid_losses.append(loss.detach().item())
+
+_, axes = plt.subplots(1, 2, figsize=(12, 4))
+
+test_X = torch.linspace(-np.pi, np.pi, 100)
+test_y = demo_curve(test_X, noise=noise)
+
+axes[0].plot(full_dataset.X, full_dataset.y, "o", label="Data")
+axes[0].plot(test_X, test_y, label="Model Output")
+axes[0].set_title("Model Fit")
+axes[0].legend()
+
+axes[1].plot(train_losses, label="Training Loss")
+axes[1].plot(valid_losses, label="Validation Loss")
+axes[1].set_title("Epoch VS Loss")
+axes[1].legend()
+
+# %% [markdown]
+# # Train With Stochastic Gradient Descent
+
 # %%
-_, axes = plt.subplots(1, 2)
-
-axes[0].plot(x, y, 'o')
-axes[0].plot(x, yhat.detach().numpy())
-axes[0].set_title("Trained NN")
-
-axes[1].plot(losses)
-axes[1].set_title("Epoch VS Loss");
-
-# %%
+# Hyperparameters
 n1 = 10
-activation_function = F.relu
+activation = F.relu
 
-num_epochs = 100
+batch_size = 1
+num_epochs = 10
 learning_rate = 0.2
 
-model = NN(nx, n1, ny, activation_function)
+# Create data loaders for the training and validation datasets
+train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
+valid_loader = DataLoader(valid_dataset, batch_size=len(valid_dataset), shuffle=False)
 
+# Create the model, loss function, and optimizer
+model = TwoLayerNetwork(nx, n1, ny, activation)
 optimizer = torch.optim.SGD(model.parameters(), lr=learning_rate)
 criterion = torch.nn.MSELoss()
 
-losses = []
+train_losses = []
+valid_losses = []
+
+# Run batch gradient descent
 for _ in range(num_epochs):
-    for xi, yi in zip(x, y):
-        yhati = model(xi)
-        
-        lossi = criterion(yhati, yi)
-        losses.append(lossi.detach().item())
-        
+
+    #
+    # Put the model in training mode and update the parameters
+    #
+
+    model.train()
+
+    # Grab the entire dataset as a single batch
+    for X, y in train_loader:
+        yhat = model(y)
+        loss = criterion(yhat, y)
+        train_losses.append(loss.detach().item())
+
         optimizer.zero_grad()
-        lossi.backward()
+        loss.backward()
         optimizer.step()
 
+    #
+    # Put the model in evaluation mode and compute the validation loss
+    #
+
+    model.eval()
+
+    with torch.no_grad():
+        X, y = next(iter(valid_loader))
+        yhat = model(y)
+        loss = criterion(yhat, y)
+        valid_losses.append(loss.detach().item())
+
+_, axes = plt.subplots(1, 2, figsize=(12, 4))
+
+test_X = torch.linspace(-np.pi, np.pi, 100)
+test_y = demo_curve(test_X, noise=noise)
+
+axes[0].plot(full_dataset.X, full_dataset.y, "o", label="Data")
+axes[0].plot(test_X, test_y, label="Model Output")
+axes[0].set_title("Model Fit")
+axes[0].legend()
+
+axes[1].plot(
+    torch.linspace(1, num_epochs, len(train_losses)),
+    train_losses,
+    label="Training Loss",
+)
+axes[1].plot(
+    torch.linspace(1, num_epochs, len(valid_losses)),
+    valid_losses,
+    label="Validation Loss",
+)
+axes[1].set_title("Epoch VS Loss")
+axes[1].legend()
+
+# %% [markdown]
+# # Train With Minibatch Stochastic Gradient Descent
+
 # %%
-_, axes = plt.subplots(1, 2)
-
-axes[0].plot(x, y, 'o')
-axes[0].plot(x, yhat.detach().numpy())
-axes[0].set_title("Trained NN")
-
-axes[1].plot(list(torch.linspace(0, N-1, len(losses))), losses)
-axes[1].set_title("Epoch VS Loss");
-
-# %%
+# Hyperparameters
 n1 = 10
-activation_function = F.relu
-
-num_epochs = 100
-learning_rate = 0.2
+activation = F.relu
 
 batch_size = 16
-num_batches = x.shape[0] // batch_size
+num_epochs = 10
+learning_rate = 0.2
 
-model = NN(nx, n1, ny, activation_function)
+# Create data loaders for the training and validation datasets
+train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
+valid_loader = DataLoader(valid_dataset, batch_size=len(valid_dataset), shuffle=False)
 
+# Create the model, loss function, and optimizer
+model = TwoLayerNetwork(nx, n1, ny, activation)
 optimizer = torch.optim.SGD(model.parameters(), lr=learning_rate)
 criterion = torch.nn.MSELoss()
 
-losses = []
+train_losses = []
+valid_losses = []
+
+# Run batch gradient descent
 for _ in range(num_epochs):
-    shuffled_indices = torch.randperm(x.shape[0])
-    
-    for batch in range(num_batches):
-        
-        xb = x[shuffled_indices[batch*batch_size:batch*batch_size+batch_size]]
-        yb = y[shuffled_indices[batch*batch_size:batch*batch_size+batch_size]]
-        
-        yhatb = model(xb)
-        lossb = criterion(yhatb, yb)
-        losses.append(lossb.detach().item())
-        
+
+    #
+    # Put the model in training mode and update the parameters
+    #
+
+    model.train()
+
+    # Grab the entire dataset as a single batch
+    for X, y in train_loader:
+        yhat = model(y)
+        loss = criterion(yhat, y)
+        train_losses.append(loss.detach().item())
+
         optimizer.zero_grad()
-        lossb.backward()
+        loss.backward()
         optimizer.step()
 
-# %%
-_, axes = plt.subplots(1, 2)
+    #
+    # Put the model in evaluation mode and compute the validation loss
+    #
 
-axes[0].plot(x, y, 'o')
-axes[0].plot(x, yhat.detach().numpy())
-axes[0].set_title("Trained NN")
+    model.eval()
 
-axes[1].plot(list(torch.linspace(0, N-1, len(losses))), losses)
-axes[1].set_title("Epoch VS Loss");
+    with torch.no_grad():
+        X, y = next(iter(valid_loader))
+        yhat = model(y)
+        loss = criterion(yhat, y)
+        valid_losses.append(loss.detach().item())
+
+_, axes = plt.subplots(1, 2, figsize=(12, 4))
+
+test_X = torch.linspace(-np.pi, np.pi, 100)
+test_y = demo_curve(test_X, noise=noise)
+
+axes[0].plot(full_dataset.X, full_dataset.y, "o", label="Data")
+axes[0].plot(test_X, test_y, label="Model Output")
+axes[0].set_title("Model Fit")
+axes[0].legend()
+
+axes[1].plot(
+    torch.linspace(1, num_epochs, len(train_losses)),
+    train_losses,
+    label="Training Loss",
+)
+axes[1].plot(
+    torch.linspace(1, num_epochs, len(valid_losses)),
+    valid_losses,
+    label="Validation Loss",
+)
+axes[1].set_title("Epoch VS Loss")
+axes[1].legend()
+
+# %% [markdown]
+# # Manually Handling Minibatches
+#
+# Here is my original version of minibatch SGD. I am leaving it here so that you can see how one might manually create batches instead of relying on the dataset+dataloader approach.
+#
+# ```python
+#
+# # Hyperparameters
+# n1 = 10
+# activation = F.relu
+#
+# batch_size = 16
+# num_epochs = 10
+# learning_rate = 0.2
+#
+# num_batches = x.shape[0] // batch_size
+#
+# model = TwoLayerNetwork(nx, n1, ny, activation)
+# optimizer = torch.optim.SGD(model.parameters(), lr=learning_rate)
+# criterion = torch.nn.MSELoss()
+#
+# losses = []
+# for _ in range(num_epochs):
+#     shuffled_indices = torch.randperm(x.shape[0])
+#
+#     for batch in range(num_batches):
+#
+#         xb = x[shuffled_indices[batch*batch_size:batch*batch_size+batch_size]]
+#         yb = y[shuffled_indices[batch*batch_size:batch*batch_size+batch_size]]
+#
+#         yhatb = model(xb)
+#         lossb = criterion(yhatb, yb)
+#         losses.append(lossb.detach().item())
+#
+#         optimizer.zero_grad()
+#         lossb.backward()
+#         optimizer.step()
+# ```
 
 # %%
