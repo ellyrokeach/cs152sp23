@@ -8,7 +8,7 @@
 #       format_version: '1.3'
 #       jupytext_version: 1.14.4
 #   kernelspec:
-#     display_name: cs152
+#     display_name: Python 3 (ipykernel)
 #     language: python
 #     name: python3
 # ---
@@ -91,8 +91,8 @@ n1 = 10
 activation = F.relu
 
 batch_size = len(train_dataset)
-num_epochs = 10
-learning_rate = 0.2
+num_epochs = 100
+learning_rate = 0.02
 
 # Create data loaders for the training and validation datasets
 train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
@@ -118,7 +118,7 @@ for _ in range(num_epochs):
     # Grab the entire dataset as a single batch
     X, y = next(iter(train_loader))
 
-    yhat = model(y)
+    yhat = model(X)
 
     loss = criterion(yhat, y)
     train_losses.append(loss.detach().item())
@@ -135,14 +135,14 @@ for _ in range(num_epochs):
 
     with torch.no_grad():
         X, y = next(iter(valid_loader))
-        yhat = model(y)
+        yhat = model(X)
         loss = criterion(yhat, y)
         valid_losses.append(loss.detach().item())
 
 _, axes = plt.subplots(1, 2, figsize=(12, 4))
 
-test_X = torch.linspace(-np.pi, np.pi, 100)
-test_y = demo_curve(test_X, noise=noise)
+test_X = torch.linspace(-np.pi, np.pi, 100).unsqueeze(dim=1)
+test_y = model(test_X).detach().numpy()
 
 axes[0].plot(full_dataset.X, full_dataset.y, "o", label="Data")
 axes[0].plot(test_X, test_y, label="Model Output")
@@ -163,8 +163,8 @@ n1 = 10
 activation = F.relu
 
 batch_size = 1
-num_epochs = 10
-learning_rate = 0.2
+num_epochs = 100
+learning_rate = 0.02
 
 # Create data loaders for the training and validation datasets
 train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
@@ -189,7 +189,7 @@ for _ in range(num_epochs):
 
     # Grab the entire dataset as a single batch
     for X, y in train_loader:
-        yhat = model(y)
+        yhat = model(X)
         loss = criterion(yhat, y)
         train_losses.append(loss.detach().item())
 
@@ -205,14 +205,14 @@ for _ in range(num_epochs):
 
     with torch.no_grad():
         X, y = next(iter(valid_loader))
-        yhat = model(y)
+        yhat = model(X)
         loss = criterion(yhat, y)
         valid_losses.append(loss.detach().item())
 
 _, axes = plt.subplots(1, 2, figsize=(12, 4))
 
-test_X = torch.linspace(-np.pi, np.pi, 100)
-test_y = demo_curve(test_X, noise=noise)
+test_X = torch.linspace(-np.pi, np.pi, 100).unsqueeze(dim=1)
+test_y = model(test_X).detach().numpy()
 
 axes[0].plot(full_dataset.X, full_dataset.y, "o", label="Data")
 axes[0].plot(test_X, test_y, label="Model Output")
@@ -241,8 +241,8 @@ n1 = 10
 activation = F.relu
 
 batch_size = 16
-num_epochs = 10
-learning_rate = 0.2
+num_epochs = 100
+learning_rate = 0.02
 
 # Create data loaders for the training and validation datasets
 train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
@@ -267,7 +267,7 @@ for _ in range(num_epochs):
 
     # Grab the entire dataset as a single batch
     for X, y in train_loader:
-        yhat = model(y)
+        yhat = model(X)
         loss = criterion(yhat, y)
         train_losses.append(loss.detach().item())
 
@@ -283,14 +283,14 @@ for _ in range(num_epochs):
 
     with torch.no_grad():
         X, y = next(iter(valid_loader))
-        yhat = model(y)
+        yhat = model(X)
         loss = criterion(yhat, y)
         valid_losses.append(loss.detach().item())
 
 _, axes = plt.subplots(1, 2, figsize=(12, 4))
 
-test_X = torch.linspace(-np.pi, np.pi, 100)
-test_y = demo_curve(test_X, noise=noise)
+test_X = torch.linspace(-np.pi, np.pi, 100).unsqueeze(dim=1)
+test_y = model(test_X).detach().numpy()
 
 axes[0].plot(full_dataset.X, full_dataset.y, "o", label="Data")
 axes[0].plot(test_X, test_y, label="Model Output")
