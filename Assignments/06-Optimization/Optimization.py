@@ -7,16 +7,12 @@
 #       extension: .py
 #       format_name: percent
 #       format_version: '1.3'
-#       jupytext_version: 1.13.5
+#       jupytext_version: 1.14.4
 #   kernelspec:
-#     display_name: Python 3 (ipykernel)
+#     display_name: cs152
 #     language: python
 #     name: python3
 # ---
-
-# %% [markdown] toc=true
-# <h1>Table of Contents<span class="tocSkip"></span></h1>
-# <div class="toc"><ul class="toc-item"><li><span><a href="#Instructions:" data-toc-modified-id="Instructions:-1"><span class="toc-item-num">1&nbsp;&nbsp;</span>Instructions:</a></span></li><li><span><a href="#Things-to-Implement" data-toc-modified-id="Things-to-Implement-2"><span class="toc-item-num">2&nbsp;&nbsp;</span>Things to Implement</a></span></li><li><span><a href="#Set-Hyperparameters" data-toc-modified-id="Set-Hyperparameters-3"><span class="toc-item-num">3&nbsp;&nbsp;</span>Set Hyperparameters</a></span></li><li><span><a href="#Prepare-the-Dataset" data-toc-modified-id="Prepare-the-Dataset-4"><span class="toc-item-num">4&nbsp;&nbsp;</span>Prepare the Dataset</a></span></li><li><span><a href="#Create-a-Neural-Network" data-toc-modified-id="Create-a-Neural-Network-5"><span class="toc-item-num">5&nbsp;&nbsp;</span>Create a Neural Network</a></span></li><li><span><a href="#Train-Classifier" data-toc-modified-id="Train-Classifier-6"><span class="toc-item-num">6&nbsp;&nbsp;</span>Train Classifier</a></span></li></ul></div>
 
 # %% [markdown]
 # # Optimization Assignment
@@ -64,13 +60,13 @@
 # A few hints:
 #
 # - Run the code all the way through without any changes and answer the first question on gradescope
-# - Adam combines momentum and RMSProp (and in this case add a bias correction)
+# - Adam combines momentum and RMSProp (and in this case adds a bias correction)
 # - $t$ increments after each update (the actual value of $t$ is only used in Adam)
 # - You'll need to add code in two places
 #     1. At the top of the training cell (to initialize momentums and squared gradients)
 #     2. In the parameter update context manager (where you'll find `param -= ...`)
-# - The documentation for torch.optim.Adam will give good values for $\beta_m$ and $\beta_g$
-# - If momentum performs poorly, then it might be that you are not updating momentum values in-place
+# - The documentation for [torch.optim.Adam](https://pytorch.org/docs/stable/generated/torch.optim.Adam.html) will give good values for $\beta_m$ and $\beta_g$
+# - If momentum performs poorly, then it might be that you are not updating momentum values **in-place**
 
 # %% [markdown]
 # ## Set Hyperparameters
@@ -95,14 +91,14 @@ jtplot.style(context="talk")
 # %%
 # Let's use some shared space for the data (so that we don't have copies
 # sitting around everywhere)
-data_path = "/raid/cs152/cache/pytorch/data"
+data_path = "/data/cs152/cache/pytorch/data"
 
 # Use the GPUs if they are available
 device = "cuda" if torch.cuda.is_available() else "cpu"
 print(f"Using '{device}' device.")
 
 # Model hyperparameters
-neurons_per_layer = [13, 17]
+neurons_per_hidden_layer = [13, 17]
 
 # Mini-Batch SGD hyperparameters
 batch_size = 256
@@ -141,7 +137,7 @@ def get_fmnist_data_loaders(path, batch_size, valid_batch_size=0):
 
 
 # %%
-# Computing normalization constants for Fashion-MNIST
+# Computing normalization constants for Fashion-MNIST (commented out since we only need to do this once)
 # train_loader, valid_loader = get_fmnist_data_loaders(data_path, 0)
 # X, _ = next(iter(train_loader))
 # s, m = torch.std_mean(X)
@@ -201,13 +197,13 @@ class NeuralNetwork(nn.Module):
 
 # %%
 # The input layer size depends on the dataset
-n0 = train_loader.dataset.data.shape[1:].numel()
+nx = train_loader.dataset.data.shape[1:].numel()
 
 # The output layer size depends on the dataset
-nL = len(train_loader.dataset.classes)
+ny = len(train_loader.dataset.classes)
 
 # Preprend the input and append the output layer sizes
-layer_sizes = [n0] + neurons_per_layer + [nL]
+layer_sizes = [nx] + neurons_per_hidden_layer + [ny]
 model = NeuralNetwork(layer_sizes).to(device)
 
 summary(model);
@@ -216,7 +212,7 @@ summary(model);
 # ## Train Classifier
 
 # %%
-# Putting this here so that the model is recreated each time the cell is run
+# Copying model creation here so that the model is recreated each time the cell is run
 model = NeuralNetwork(layer_sizes).to(device)
 
 t = 0
