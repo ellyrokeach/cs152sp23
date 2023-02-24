@@ -278,24 +278,21 @@ for epoch in mb:
                 
             # Gradient descent with momentum
             # for param, momentum in ...
-                # m_{t+1} := β_m m_t + (1 - β_m) \nabla_θ L_b(θ_t)
-                # θ_{t+1} := θ_t - η m_{t+1}
-                ...
-                
+            #     m_{t+1} := β_m m_t + (1 - β_m) \nabla_θ L_b(θ_t)
+            #     θ_{t+1} := θ_t - η m_{t+1}
+               
             # Gradient descent with RMSProp
             # for param, sq_grad in ...
-                # g_{t+1}^2 := β_g g_t^2 + (1 - β_g) (\nabla_θ L_b(θ_t))^2
-                # θ_{t+1} := θ_t - η \frac{\nabla_θ L_b(θ_t)}{\sqrt{g_{t+1}^2} + ε}
-                ...
+            #     g_{t+1}^2 := β_g g_t^2 + (1 - β_g) (\nabla_θ L_b(θ_t))^2
+            #     θ_{t+1} := θ_t - η \frac{\nabla_θ L_b(θ_t)}{\sqrt{g_{t+1}^2} + ε}
 
             # Gradient descent with Adam
             # for param, momentum, sq_grad in ...
-                # m_{t+1} := β_m m_t + (1 - β_m) \nabla_θ L_b(θ_t)
-                # \hat m_{t+1} := \frac{m_{t+1}}{1 - β_m^t}
-                # g_{t+1}^2 := β_g g_t^2 + (1 - β_g) (\nabla_θ L_b(θ_t))^2
-                # \hat g_{t+1}^2 := \frac{g_{t+1}^2}{1 - β_g^t}
-                # θ_{t+1} := θ_t - η \frac{\hat m_{t+1}}{\sqrt{\hat g_{t+1}^2} + ε}
-                ...
+            #     m_{t+1} := β_m m_t + (1 - β_m) \nabla_θ L_b(θ_t)
+            #     \hat m_{t+1} := \frac{m_{t+1}}{1 - β_m^t}
+            #     g_{t+1}^2 := β_g g_t^2 + (1 - β_g) (\nabla_θ L_b(θ_t))^2
+            #     \hat g_{t+1}^2 := \frac{g_{t+1}^2}{1 - β_g^t}
+            #     θ_{t+1} := θ_t - η \frac{\hat m_{t+1}}{\sqrt{\hat g_{t+1}^2} + ε}
 
     #
     # Validation
