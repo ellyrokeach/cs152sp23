@@ -6,16 +6,12 @@
 #       extension: .py
 #       format_name: percent
 #       format_version: '1.3'
-#       jupytext_version: 1.13.5
+#       jupytext_version: 1.14.4
 #   kernelspec:
-#     display_name: Python 3 (ipykernel)
+#     display_name: cs152
 #     language: python
 #     name: python3
 # ---
-
-# %% [markdown] toc=true
-# <h1>Table of Contents<span class="tocSkip"></span></h1>
-# <div class="toc"><ul class="toc-item"><li><span><a href="#Create-a-noisy-signal" data-toc-modified-id="Create-a-noisy-signal-1"><span class="toc-item-num">1&nbsp;&nbsp;</span>Create a noisy signal</a></span></li><li><span><a href="#Windowing-Average" data-toc-modified-id="Windowing-Average-2"><span class="toc-item-num">2&nbsp;&nbsp;</span>Windowing Average</a></span></li><li><span><a href="#Exponential-Moving-Average-(EMA)" data-toc-modified-id="Exponential-Moving-Average-(EMA)-3"><span class="toc-item-num">3&nbsp;&nbsp;</span>Exponential Moving Average (EMA)</a></span></li><li><span><a href="#EMA-With-Bias-Correction" data-toc-modified-id="EMA-With-Bias-Correction-4"><span class="toc-item-num">4&nbsp;&nbsp;</span>EMA With Bias Correction</a></span></li></ul></div>
 
 # %%
 import torch
@@ -52,7 +48,7 @@ for i, yval in enumerate(y):
 
 plt.plot(x, torch.sin(x), label="True")
 plt.plot(x, y, label="Noisy")
-plt.plot(x, y_smooth, label=f"Window {wsize}")
+plt.plot(x, y_smooth, label=f"Size {wsize} Window")
 _ = plt.legend()
 
 
