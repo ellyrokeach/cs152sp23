@@ -8,7 +8,7 @@
 #       format_version: '1.3'
 #       jupytext_version: 1.14.4
 #   kernelspec:
-#     display_name: cs152
+#     display_name: Python 3 (ipykernel)
 #     language: python
 #     name: python3
 # ---
@@ -45,14 +45,19 @@ def loss_landscape_function(X, size):
 
 
 def loss_landscape_plot_data(size, step=0.1):
+    """Generate data for plotting the loss landscape as a surface."""
+    # Generate grid of points
     x1 = x2 = torch.arange(-size, size, step)
     X1, X2 = torch.meshgrid(x1, x2, indexing="ij")
     X = torch.stack([X1.reshape(-1), X2.reshape(-1)], dim=1)
+
+    # Compute loss landscape
     L = loss_landscape_function(X, size).reshape_as(X1)
     return X1, X2, L
 
 
 def plot_loss_landscape(size, ax=None, step=0.1):
+    """Plot the loss landscape as surface and contour plots."""
 
     if ax == None:
         fig = plt.figure(figsize=(8, 8))
@@ -82,10 +87,9 @@ plot_loss_landscape(3)
 # %%
 def train(size, opt_func, learning_rate, num_epochs=100):
 
-    # Parameters
+    # Parameters (ensuring all runs start at 1.5, 1.0)
     W = torch.tensor([[1.5, 1.0]], requires_grad=True)
     optimizer = opt_func([W], lr=learning_rate)
-    criterion = torch.nn.MSELoss()
 
     w1 = []
     w2 = []
@@ -98,7 +102,9 @@ def train(size, opt_func, learning_rate, num_epochs=100):
         # Save parameters and loss for plots
         w1.append(W[0][0].item())
         w2.append(W[0][1].item())
-        ls.append(loss.item() + 0.05)  # shift up for plots
+
+        # Shift loss just above surface for visibility
+        ls.append(loss.item() + 0.05)
 
         # Update parameters
         optimizer.zero_grad()
@@ -117,8 +123,10 @@ opt_funcs = {
     "Adam": torch.optim.Adam,
 }
 
+# Size/scale of the loss landscape
 size = 3
 
+# Train parameters using each optimizer configuration
 results = {}
 for lr in lrs:
     for opt in opt_funcs:
@@ -167,6 +175,27 @@ animation = FuncAnimation(fig, animate, len(w1))
 HTML(animation.to_jshtml())
 
 # %%
-# animation.save("optimization.mp4")
+num_subplots = len(results)
+fig, axes = plt.subplots(1, num_subplots, figsize=(16, 4))
+
+# Plot the loss landscape as contours and the result line for all subplots
+lines = []
+for ax, result, color in zip(axes, results, colors):
+    ax.contourf(X1, X2, L, levels=10)
+    label = result.replace(", ", "\n")
+    ax.text(0, 1, label, ha="left", va="top", transform=ax.transAxes, fontsize=10, bbox=dict(facecolor='white', alpha=0.5))
+    lines.append(ax.plot([], [], color, linewidth=3, label=result)[0])
+
+def animate(frame):
+    for ax, result, line in zip(axes, results, lines):
+        w1, w2, _ = results[result]
+        line.set_data(w1[:frame], w2[:frame])
+    return lines
+
+
+animation = FuncAnimation(fig, animate, len(w1))
+
+# %%
+HTML(animation.to_jshtml())
 
 # %%
