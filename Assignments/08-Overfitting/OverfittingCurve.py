@@ -32,7 +32,7 @@
 # - Now run the notebook. What surprised you? What matched your expectations?
 # - Now report on your results with the following:
 #     + Changing the number of degrees in the polynomial model.
-#     + Using a non-zero weight decay for the neural network model.
+#     + Using a non-zero weight decay.
 #     + Changing the number of layers in the neural network model.
 #     + Changing the number of training samples.
 # - Finally, open the `OverfittingFashionMNIST.ipynb` and see if you can get the neural network to overfit the data (get the bad thing to happen).
@@ -184,20 +184,6 @@ def train_model(learning_rate, num_epochs, weight_decay, model, params):
 
     return train_losses, valid_losses
 
-    #     # Model
-    #     yhat = model(X)
-
-    #     # Compute loss
-    #     loss = criterion(yhat.squeeze(), y)
-    #     losses.append(loss.item())
-
-    #     # Update parameters
-    #     optimizer.zero_grad()
-    #     loss.backward()
-    #     optimizer.step()
-
-    # return losses
-
 
 # %% [markdown]
 # ## Train a Linear Model Using Batch Gradient Descent
@@ -308,7 +294,6 @@ train_X_polynomial = train_X.unsqueeze(-1).pow(powers)
 # Compute "optimal" parameters
 params = ((train_X_polynomial.T @ train_X_polynomial).inverse() @ train_X_polynomial.T) @ train_y
 
-
 def model(X):
     return X @ params
 
@@ -369,6 +354,6 @@ for param in model.parameters():
     print(param.abs().mean().item())
 
 # %%
-# !jupytext --sync OverfittingCurve.ipynb
+# # !jupytext --sync OverfittingCurve.ipynb
 
 # %%
