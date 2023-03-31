@@ -635,5 +635,4 @@ for word, part in zip(new_sentence.split(), predictions):
     print(word, "=>", part_list[part.item()])
 
 # %%
-# # !jupytext --sync PartsofSPeechRNN.ipynb
-# !ls
+# # !jupytext --sync PartsOfSpeechRNN.ipynb
