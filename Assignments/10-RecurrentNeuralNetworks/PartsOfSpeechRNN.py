@@ -196,6 +196,57 @@ raw_dataset = [
     ("Game math win", "N N N"),
     ("Nutella is a topping", "N V D N"),
     ("Work takes time", "N V N"),
+    ("Dog jumps a box", "N V D N"),
+    ("Let's take a walk", "V V D N"),
+    ("Monkey eats a banana", "N V D N"),
+    ("Hiker sees a bear", "N V D N"),
+    ("Student walks to town", "N V D N"),
+    ("Running is a fun activity", "V V D N N"),
+    ("Brother plays an instrument", "N V D N"),
+    ("Fox jumps the log", "N V D N"),
+    ("Squirrels climb the tree", "N V D N"),
+    ("Tree hits the squirrel", "N V D N"),
+    ("Mother drives the car", "N V D N"),
+    ("The Earth loves you", "D N V N"),
+    ("The prices rise today", "D N V N"),
+    ("I am studying English", "N V V N"),
+    ("Dad eats a burrito", "N V D N"),
+    ("Mom drinks water", "N V N"),
+    ("Cat sings a song", "N V D N"),
+    ("Doctor prescribes medicine", "N V N"),
+    ("Teacher gives exam", "N V N"),
+    ("Cat climbs the fence", "N V D N"),
+    ("Sister opens the window", "N V D N"),
+    ("Bees drink the nectar", "N V D N"),
+    ("Dog barks loud", "N V N"),
+    ("Tennis players hit others", "N N V N"),
+    ("I am playing volleyball", "N V V N"),
+    ("The code doesn't run", "D N V V"),
+    ("Dog ate my homework", "N V N N"),
+    ("Visiting the tomato factory", "V D N N"),
+    ("Dog bit cat", "N V N"),
+    ("I drink water", "N V N"),
+    ("The code throws an exception", "D N V D N"),
+    ("Student flies the spaceship", "N V D N"),
+    ("Cat cuts banana", "N V N"),
+    ("Students had exams", "N V N"),
+    ("Father gets milk", "N V N"),
+    ("Mother cries", "N V"),
+    ("Players shoot a shot", "N V D N"),
+    ("Ball hits the ground", "N V D N"),
+    ("The apple fell", "D N V"),
+    ("The students learned English", "D N V N"),
+    ("Birds eat a cake", "N V D N"),
+    ("Dogs chase a squirrel ", "N V D N"),
+    ("Flying is fun", "V V N"),
+    ("She is working", "N V V"),
+    ("The spaghetti died", "D N V"),
+    ("I ate the food", "N V D N"),
+    ("She lied", "N V"),
+    ("Mary wants pizza", "N V N"),
+    ("John loves the beach", "N V D N"),
+    ("I am sitting", "N V V "),
+    ("Monique loves tv", "N V N"),
 ]
 
 
@@ -237,7 +288,7 @@ total_parts = 0
 for words, parts in dataset:
 
     # Need a part-of-speech for every word
-    assert len(words) == len(parts)
+    assert len(words) == len(parts), f"Mismatch in input/output lengths for {words}"
 
     # Process words
     total_words += len(words)
