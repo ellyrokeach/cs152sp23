@@ -1,0 +1,32 @@
+#!/usr/bin/env bash
+
+# Set options for recurisve glob
+shopt -s globstar nullglob
+
+RAW_DATASET_PATH=/data/cs152/FrankOrFrary/raw
+PROCESSED_DATASET_PATH=/data/cs152/FrankOrFrary/processed
+
+# Loop over all images in the raw dataset
+for image_to_convert in "$RAW_DATASET_PATH"/**/*; do
+    # Skip directories
+    if [[ -d "$image_to_convert" ]]; then continue; fi
+
+    # Get the file name and replace extension with jpg
+    image_name=$(basename "$image_to_convert")
+    image_name="${image_name%.*}.jpg"
+
+    # Ensure the output directory exists
+    parent_name=$(basename "$(dirname "$image_to_convert")")
+    mkdir -p "$PROCESSED_DATASET_PATH"/"$parent_name"
+
+    # Create the new image name
+    image_name="$PROCESSED_DATASET_PATH"/"$parent_name"/"$image_name"
+
+    # Create the new image if it doesn't exist
+    if [[ -f "$image_name" ]]; then
+        echo "$image_name" already exists
+    else
+        echo "Creating $image_name"
+        convert "$image_to_convert" -strip -thumbnail '1000>' -format jpg "$image_name"
+    fi
+done
